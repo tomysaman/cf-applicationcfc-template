@@ -17,16 +17,22 @@ component {
     this.sessionTimeout = createTimeSpan(0,0,30,0);
     this.timeout = 60;
     this.requestTimeout = this.timeout;
+    this.setClientCookies = true; // Whether to send CFID and CFTOKEN cookies to the client browser. If set to false CFID & CFTOKEN must be passed in via URL.
+    this.setDomainCookies = false; // Whether to set CFID and CFTOKEN cookies for a domain (not just a host).
+    this.locale = "English (Australian)"; // Lucee only - https://cfdocs.org/setlocale
+    this.timezone = "Australia/Sydney"; // Lucee only - http://www.javadb.com/list-possible-timezones-or-zoneids-in-java/
     this.scriptProtect = "all"; // all|none, or a combination of: form, url, cookie, cgi
+    this.secureJSON = true; // Protection to JSON hijacking
+    this.secureJSONPrefix = "//";
     // A structure of mappings. The logical path is the key and the absolute path is the value.
     this.mappings = {
-        "/CFIDE" = expandPath('./lucee/'),
-        "/API" = expandPath('./api')
+        "/CFIDE" = expandPath('/path/to/cfide'),
+        "/API" = expandPath('../api')
     };
     // Lucee's way of specify multiple datasources
     this.datasources["myDSN_local"] = {
         class: 'org.gjt.mm.mysql.Driver'
-        , connectionString: 'jdbc:mysql://127.0.0.1:3309/my_database?useUnicode=true&characterEncoding=UTF-8&useLegacyDatetimeCode=true'
+        , connectionString: 'jdbc:mysql://127.0.0.1:3306/my_database?useUnicode=true&characterEncoding=UTF-8&useLegacyDatetimeCode=true'
         , username: 'root'
         , password: "encrypted:..."
         , blob: true // default: false
@@ -35,13 +41,8 @@ component {
     };
     this.datasource = "myDSN_local";
     this.defaultDatasource = this.datasource;
-    this.locale = "English (Australian)"; // Lucee only - https://cfdocs.org/setlocale
-    this.timezone = "Australia/Sydney"; // Lucee only - http://www.javadb.com/list-possible-timezones-or-zoneids-in-java/
-    this.secureJSON = true;
-    this.secureJSONPrefix = "//";
+
     /*
-    this.setClientCookies = true; // Whether to send CFID and CFTOKEN cookies to the client browser. If set to false CFID & CFTOKEN must be passed in via URL.
-    this.setDomainCookies = false;	// Whether to set CFID and CFTOKEN cookies for a domain (not just a host).
     // List of custom tag paths
     this.customTagPaths = [
         expandPath('/org/webqem/'),
@@ -52,7 +53,7 @@ component {
         expandPath('/org/webqem/'),
         expandPath('/org/tomy/')
     ];
-    this.sessionType = "cfml"; // Lucee only - cfml|j2ee - cfml: session handled by Lucee; j2ee: session handled by the Servlet Engine; Use j2ee to make sessions over a clusterto or share session with a Java application.
+    this.sessionType = "j2ee"; // Lucee only - cfml|j2ee - cfml: session handled by Lucee; j2ee: session handled by the Servlet Engine; Use j2ee to make sessions over a clusterto or share session with a Java application.
     this.clientManagement = false;
     this.clientTimeout = createTimeSpan(90,0,0,0);
     this.sessionStorage = "memory"; // Lucee only - file|memory|cookie|<datasource-name>|<cache-name>
@@ -63,9 +64,9 @@ component {
     this.compression = true; // Lucee only - Enable GZip compression.
     this.invokeImplicitAccessor = true; // Enable auto getter and setter (e.g. set<ValueName>()) when you call Component.<valueName>
     this.localMode = "modern"; // Lucee only - modern|classic - Defines how the local scope is invoked; modern: local scope is invoked always even variable does not exist in the local scope; classic: local scope is only invoked when variable already exists in the local scope.
-    this.scopeCascading = "standard"; // Lucee only - strict|small|standard - Define how Lucee scans certain scopes to find a variable when it is called without a scope; strict: scans only the variables scope; small: scans the scopes variables,url,form; standard: scans the scopes variables,cgi,url,form,cookie.
+    this.scopeCascading = "small"; // Lucee only - strict|small|standard - Define how Lucee scans certain scopes to find a variable when it is called without a scope; strict: scans only the variables scope; small: scans the scopes variables,url,form; standard: scans the scopes variables,cgi,url,form,cookie.
     this.wstype = "Axis1"; // Lucee only - Axis1|CXF
-    this.onmissingtemplate = "???"; // Lucee only -
+    this.onmissingtemplate = "path/to/cfm"; // Lucee only - Closure/udf executed when the requested template does not exist
     this.bufferOutput = true; // Lucee only - True: output written to the body of the tag is buffered and in case of a exception also outputted. False: the content to body is ignored and not disabled when a failure in the body of the tag occur.
     this.suppressRemoteComponentContent = false; // Lucee only - Suppress content written to response stream when a component is invoked remotely.
     */
