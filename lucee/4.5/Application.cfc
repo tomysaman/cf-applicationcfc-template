@@ -75,17 +75,25 @@ component {
     // also see: http://www.compoundtheory.com/how-i-configure-coldfusion-orm-and-why/
     this.ormEnabled = true;
     this.ormsettings = {
-        cfclocation = [expandPath('/app/common/model/')], // Array of directories to beans
-        dbcreate = "update", // none|update|dropcreate - Auto update, or drop-then-create db tables base on beans
-        logsql = true,
-        savemapping = false, // Turn this on to save the Hibernate config xml files to disk (for inspection/debug) - NOTE: If this is on, you may need to manually delete these xml files, or delete the compiled class (/WEB-INF/cfclasses) and restart CF in order for new (updated) xml files being generated and used for ORM
+        //dialect = "MySQL", // Usually don't need to specify this, CF will detect automatically
+        cfcLocation = [expandPath('/app/common/model/')], // Array of directories to beans
+        dbCreate = "update", // none|update|dropcreate - Auto update, or drop-then-create db tables base on beans
+        autoGenMap = true, // If false, mapping should be provided in the form of .HBMXML files.
+        logSql = true,
+        //catalog = "", // DB catalog - usually only needed if you want ORM to access multiple databases
+        //schema = "", // DB schema - usually only needed if you want ORM to access multiple databases
+        namingStrategy = "default", // default: Use the logical table or column name as it is; smart: Change the logical table or column name to uppercase. If the logical table or column name is in camel case, this strategy breaks the camelcased name and separates them with underscore; your_own_cfc : You can get complete control of the naming strategy by providing your own implementation.
+        saveMapping = false, // Turn this on to save the Hibernate config xml files to disk (for inspection/debug) - NOTE: If this is on, you may need to manually delete these xml files, or delete the compiled class (/WEB-INF/cfclasses) and restart CF in order for new (updated) xml files being generated and used for ORM
         useDBForMapping = true, // Set to false to improve ORM reload time (so CF won't inspect database to figure out the mappings). If it is false then we need to make sure every properties will have a ORM type and other settings set properly
-        eventHandling = true, // Turn on even handling and we can use functions such as preUpdate(), postUpdate() in our bean cfc - See: http://therealdanvega.com/blog/2009/12/22/coldfusion-9-orm-event-handlers-use-case
-        //evenHandler = 'path.to.cfc', // Custom global ORM event handler cfc
+        eventHandling = false, // Turn on even handling and we can use functions such as preUpdate(), postUpdate() in our bean cfc - See: http://therealdanvega.com/blog/2009/12/22/coldfusion-9-orm-event-handlers-use-case
+        //evenHandler = "path.to.cfc", // Custom global ORM event handler cfc
+        //sqlScript = "path.to.sql", // Path to SQL script file that gets executed after ORM is initialized. This applies if dbcreate is set to dropcreate
+        //secondaryCacheEnabled = false, // Specifies whether secondary caching should be enabled.
+        //cacheProvider = "ehcache", // Specifies the cache provider that should be used by ORM as secondary cache.
+        //cacheconfig = "path.to.config", // Specifies the location of the configuration file that should be used by the secondary cache provider.
         // Set below two settings to false so we have complete control on Hibernate session. The only thing happens automatically is that session is flushed when a transaction commits
-        flushatrequestend = false, // Set this to false, we need to control ORM Flush - don't let CF do it automatically at the end of a request
-        automanageSession = false // Also set this to false, then 1). Stop Hibernate session being flushed at the beginning of a transaction; 2). Stop Hibernate session being cleared when a transaction is rolled back
-
+        flushAtRequestEnd = false, // Set this to false, we need to control ORM Flush - don't let CF do it automatically at the end of a request
+        autoManageSession = false // Also set this to false, then 1). Stop Hibernate session being flushed at the beginning of a transaction; 2). Stop Hibernate session being cleared when a transaction is rolled back
     };
 
     /*
