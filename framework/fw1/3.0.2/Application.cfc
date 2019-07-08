@@ -4,7 +4,7 @@ component extends="lib.fw1.one" output="false" {
 		- OnSessionStart: Do it in setupSession()
 		- OnRequestStart: Do it in setupRequest()
 		- OnRequest: DO NOT override
-		- OnRequestEnd: Can override, but must call super.onRequestEnd() first
+		- OnRequestEnd: OnRequestEnd: Do it in setupResponse()
 		- OnSessionEnd: Can override (actually no onSessionEnd in fw1)
 		- OnApplicationEnd: Can override (actually no OnApplicationEnd in fw1)
 		- onCFCRequest: Can override (actually no onCFCRequest in fw1) - probably won't have any reason to use this in fw1 app
@@ -133,7 +133,7 @@ component extends="lib.fw1.one" output="false" {
 	*/
 	variables.framework = {
 		applicationKey = this.name & '_fw1', // Used if you have multiple fw1 applications that share the same CF application name
-		base = '/app', // Must be set if the application itself (controllers,model,views,layouts etc) is not in the same directory as Application.cfc and index.cfm - this is a relative path to Application.cfc (and must start with "/")
+		base = '/app', // Must be set if the application itself (controllers,model,views,layouts etc) is not in the same directory as Application.cfc and index.cfm -  this must be a web root relative path and must start with "/"
 		//cfcBase = '', // Only set this if the controllers and model folders are not in the same folder
 		//action = 'action',
 		//defaultSection = 'main',
@@ -150,7 +150,7 @@ component extends="lib.fw1.one" output="false" {
 		SESOmitIndex = false, // /?action=main.about becomes /main/about
 		diEngine = 'di1',
 		diComponent = 'lib.fw1.ioc', // Path to DI/1 ioc.cfc
-		diLocations = '/app/model,/app/controllers', // Paths to fw1 model and controllers folders
+		diLocations = '/app/model,/app/controllers', // Paths to fw1 model and controllers folders,  this must be a web root relative path and must start with "/"
 		//diConfig = { },
 		cacheFileExists = false, // Cache the result of FileExists() calls to improve fw performance speeed (with this set to true, we will need to reload fw if we add any new cfc/view/layout files)
 		//noLowerCase = false, // ALWAYS set this to false to enforce lower case on action url variable so it won't cause issue when we are on filename case sensitive OS
