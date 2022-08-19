@@ -138,6 +138,10 @@ component {
         Argument is the requested template page.
     */
     public boolean function onRequestStart(required string targetPage) {
+        // Reload application by using URL.reload=1
+        if (isDefined("URL.reload") and URL.reload) {
+            onApplicationStart();
+        }
         return true;
     }
 
