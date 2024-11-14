@@ -342,9 +342,7 @@ component extends="lib.taffy.core.api" output="false" {
 				header statuscode="500" statustext="Internal Server Error";
 				writeoutput("<h1>Error 500 <small>Internal Server Error</small></h1>");
 				writeoutput("<p>Oops! An error has occured.</p>");
-				writeoutput("<p><strong>Error Message:</strong> #exception.message#</p>");
-				writeoutput("<p>The team has been notified of this error, please check back later.</p>");
-				writeoutput("<p>#exception.detail#</p>");
+				writeoutput("<p><strong>Error Message:</strong> #exception.message# - #exception.detail#</p>");
 				if ( getEnvironment() eq "dev" ) {
 					writeoutput("<h3>Exception Detail</h3>");
 					writedump(exception);
@@ -380,7 +378,7 @@ component extends="lib.taffy.core.api" output="false" {
 				result["error"] = application.utils.udf.api_newErrorData( fieldList="resource,code,detail", includeDebug=(getEnvironment() eq "dev") );
 				// Prepare result
 				var nowUTC = dateConvert("local2Utc", now());
-				result.status = "500";
+				result.status = 500;
 				result.message = "Internal Server Error";
 				result.timestamp = dateFormat(nowUTC,"yyyy-mm-dd") & "T" & timeFormat(nowUTC,"HH:mm:ss") & "-00:00";
 				// The API resource endpoint (can be in URL or FORM scope)
@@ -388,8 +386,8 @@ component extends="lib.taffy.core.api" output="false" {
 					result.error.resource = endpoint;
 				}
 				result.error.code = "server_500";
-				result.error.detail = "Internal server error - please check back later";
-				// Add debug info if in dev
+				result.error.detail = "Internal server error - #exception.message# - #exception.detail#";
+				// Add detailed debug info if in dev
 				if ( getEnvironment() eq "dev" ) {
 					result.error.debug.message = exception.message;
 					result.error.debug.detail = exception.detail;
