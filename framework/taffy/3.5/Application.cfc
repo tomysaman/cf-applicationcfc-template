@@ -158,7 +158,7 @@ component extends="lib.taffy.core.api" output="false" {
 			"X-Frame-Options"="deny",
 			"Content-Security-Policy"="default-src 'none'"
 		},
-		//debugKey = "showdebug", // For <cfsetting showdebugoutput="true">, if this is present in url (and debug is on in CF/Lucee admin) then debug info will show up
+		//debugKey = "debug", // For <cfsetting showdebugoutput="true">, if this is present in url (and debug is on in CF/Lucee admin) then debug info will show up
 		useEtags = false, // Enable the use of HTTP ETags for caching purposes or not (see: http://fideloper.com/api-etag-conditional-get). According to Taffy doc, this feature is buggy for Lucee 4.0 (not sure about 4.5/5.0)
 		returnExceptionsAsJson = true, // If set to true then unhandled CF errors will be returned as as json in the response body
 		exceptionLogAdapter = "taffy.bonus.LogToEmail", // Use taffy.bonus.LogToEmail so that errors are sent as error emails
