@@ -45,6 +45,7 @@ component extends="lib.taffy.core.api" output="false" {
 	this.uploadPath = this.webRoot & "assets/upload/"; // This is our "upload" folder for storing user uploaded files
 	this.mappings = {
 		"/app" = this.appRoot & 'app', // mapping to our app files (your app's beans/services etc), which is outside of our web root and won't be accessible directly from web
+		"/api" = this.apiRoot, // mapping to our Taffy app
 		"/taffy" = this.webRoot & 'lib/taffy', // mapping to Taffy core & dashboard files
 		"/resources" = this.apiRoot & "resources" // mapping to Taffy api resources files
 	};
@@ -274,6 +275,7 @@ component extends="lib.taffy.core.api" output="false" {
 		// Note: After the above super.onApplicationStart() finishes, all Taffy's settings (i.e. variables.framework) will be available in application._taffy.settings so that you can still access them in another cfc where you normally cannot access variables scope set here
 		
 		application.config.initializedAt = now();
+		writeLog(file="your_api", type="information", text="Your API reloaded from ?#cgi.query_string#");
 		return true;
 	}
 
@@ -302,6 +304,13 @@ component extends="lib.taffy.core.api" output="false" {
 		loggingData["headers"] = arguments.headers;
 		application.utils.logger.addLog( "API", "Begin processing [#arguments.verb#] #arguments.matchedURI#", SerializeJSON(loggingData), "" );
 
+		if( structKeyExists(arguments.requestArguments, "debugRequest") AND arguments.requestArguments.debugRequest ) {
+			content reset="true" type="text/html; charset=utf-8";
+			writedump(var=arguments, label="Arguments");
+			writedump(var=GetHttpRequestData(), label="GetHttpRequestData()");
+			abort;
+		}
+
 		return true;
 	}
 
@@ -318,6 +327,13 @@ component extends="lib.taffy.core.api" output="false" {
 		loggingData["headers"] = arguments.headers;
 		responseData = arguments.originalResponse;
 		application.utils.logger.addLog( "API", "Finish processing [#arguments.verb#] #arguments.matchedURI#", SerializeJSON(loggingData), SerializeJSON(responseData) );
+	
+		if( structKeyExists(arguments.requestArguments, "debugResponse") AND arguments.requestArguments.debugResponse ) {
+			content reset="true" type="text/html; charset=utf-8";
+			writedump(var=arguments, label="Arguments");
+			writedump(var=GetHttpRequestData(), label="GetHttpRequestData()");
+			abort;
+		}
 	}
 
 	/* We override Taffy's onError method because:
@@ -330,7 +346,9 @@ component extends="lib.taffy.core.api" output="false" {
 	*/
 	public void function onError(required any exception, required string eventName) {
 		// IMPORTANT: Do NOT call any onError or thorwError method here (unless there is propery try/catch in them) because if any error occurs in them will send the request back here again and could result in infinate looping
-		// writedump(exception); abort; // Just dump it
+		// writedump(exception); abort;
+		writeLog(file="your_api", type="fatal", text="onError() : #exception.message# - #exception.detail# : #getErrorTracks(exception.tagContext)#");
+
 		try {
 			// Call our Taffy error logger/handler, which we set it to taffy.bonus.LogToEmail - it will send out error email
 			var logger = createObject("component", application._taffy.settings.exceptionLogAdapter).init( application._taffy.settings.exceptionLogAdapterConfig );
@@ -477,9 +495,19 @@ component extends="lib.taffy.core.api" output="false" {
 	}
 
 	// Note: getCanonicalPath is only available in Lucee; use this function if in CF
-	private string function getCanonicalPathCF(required string rawPath) hint="CF implementation of getCanonicalPath() function" {
+	public string function getCanonicalPathCF(required string rawPath) hint="CF implementation of getCanonicalPath() function" {
 		var canonicalPath = createObject("java", "java.io.File").init(arguments.rawPath).getCanonicalPath();
 		return canonicalPath;
+	}
+
+	// Helper function to turn error tagContext info from array to a string. Useful for cflog as it can be logged as text and easier to inspect
+	public string function getErrorTracks(required array tagContext) hint="Go through CF error tagContext array and return their files & line numbers in one single string" {
+		var result = "|";
+		for( var item in arguments.tagContext ) {
+			var thisError = "#item.template#:#item.line#";
+			result = result & " #thisError# |";
+		}
+		return result;
 	}
 
 }
