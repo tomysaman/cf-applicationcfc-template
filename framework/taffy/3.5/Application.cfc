@@ -1,5 +1,5 @@
 component extends="lib.taffy.core.api" output="false" {
-	/* Application.cfc for Earthquake API project - using Taffy 3.6.0 with Lucee 5
+	/* Application.cfc for your Taffy API project - using Taffy 3.6.0 with Lucee 5
 		NOTE: If you want to override Taffy's Application.cfc methods (such as OnApplicationStart, OnRequestEnd etc), look at the comments in taffy/core/api.cfc
 		- OnApplicationStart: MUST override it and call super.onApplicationStart()
 		- OnSessionStart: Not used (no session used in taffy)
@@ -353,85 +353,105 @@ component extends="lib.taffy.core.api" output="false" {
 			// Call our Taffy error logger/handler, which we set it to taffy.bonus.LogToEmail - it will send out error email
 			var logger = createObject("component", application._taffy.settings.exceptionLogAdapter).init( application._taffy.settings.exceptionLogAdapterConfig );
 			logger.saveLog(exception);
-
-			if ( structKeyExists(request, 'unhandled') and request.unhandled eq true ) {
-				// This is a request to an unhandled path/page, we can just dump out error message onto screen
-				content reset="true" type="text/html; charset=utf-8";
-				header statuscode="500" statustext="Internal Server Error";
-				writeoutput("<h1>Error 500 <small>Internal Server Error</small></h1>");
-				writeoutput("<p>Oops! An error has occured.</p>");
-				writeoutput("<p><strong>Error Message:</strong> #exception.message# - #exception.detail#</p>");
-				if ( getEnvironment() eq "dev" ) {
-					writeoutput("<h3>Exception Detail</h3>");
-					writedump(exception);
-					writeoutput("<h3>HTTP REQUEST DATA</h3>");
-					writedump(GetHttpRequestData());
-					writeoutput("<h3>REQUEST</h3>");
-					writedump(request);
-					writeoutput("<h3>DEBUG</h3>");
-					try {
-						writedump(request.debug);
-					} catch (any e) {
-						writeoutput("<em>DEBUG is not available</em>");
-					}
-					writeoutput("<h3>SESSION</h3>");
-					try {
-						writedump(session);
-					} catch (any e) {
-						writeoutput("<em>SESSION is not available</em>");
-					}
-					writeoutput("<h3>FORM</h3>");
-					writedump(form);
-					writeoutput("<h3>URL</h3>");
-					writedump(url);
-					writeoutput("<h3>CGI</h3>");
-					writedump(cgi);
-					writeoutput("<h3>APPLICATION CONFIG</h3>");
-					writedump(application.config);
-				}
-			} else {
-				// This is an API request, so return the error in proper json format
-				// Get skeleton api response result data struct
-				var result = application.utils.udf.api_newResultData( fieldList="status,message,timestamp" );
-				result["error"] = application.utils.udf.api_newErrorData( fieldList="resource,code,detail", includeDebug=(getEnvironment() eq "dev") );
-				// Prepare result
-				var nowUTC = dateConvert("local2Utc", now());
-				result.status = 500;
-				result.message = "Internal Server Error";
-				result.timestamp = dateFormat(nowUTC,"yyyy-mm-dd") & "T" & timeFormat(nowUTC,"HH:mm:ss") & "-00:00";
-				// The API resource endpoint (can be in URL or FORM scope)
-				if ( isDefined("endpoint") ) {
-					result.error.resource = endpoint;
-				}
-				result.error.code = "server_500";
-				result.error.detail = "Internal server error - #exception.message# - #exception.detail#";
-				// Add detailed debug info if in dev
-				if ( getEnvironment() eq "dev" ) {
-					result.error.debug.message = exception.message;
-					result.error.debug.detail = exception.detail;
-					result.error.debug.stacktrace = exception.tagContext;
-				}
-				// Convert result to json string
-				var resultJsonString = serializeJson(result); // May need to switch to use the Taffy json serialiser to make the result consistent.
-				// Log it
-				if ( isDefined("application.utils.logger") ) {
-					application.utils.logger.addLog( "API", "Error processing #result.error.resource#", serializeJson(GetHttpRequestData()), resultJsonString );
-				}
-				// Get the error json out
-				content reset="true" type="application/json; charset=utf-8";
-				header statuscode="500" statustext="Internal Server Error";
-				writeoutput( resultJsonString );
-			}
 		} catch (any e) {
-			// Error occurs within this onError method itself, just display the error
-			content reset="true" type="text/html; charset=utf-8";
+			// Error occurs when trying to run Taffy's error handler (sending error email), should never let this happen. But if it does, need to notify us so it can be fixed quickly
+			// Log it
+			writeLog(file="your_api_onError_tryCatch_errors", type="fatal", text="Error occurred inside onError() handler:");
+			writeLog(file="your_api_onError_tryCatch_errors", type="fatal", text="#e.message# - #e.detail# : #getErrorTracks(e.tagContext)#");
+			writeLog(file="your_api_onError_tryCatch_errors", type="fatal", text="Original root error:");
+			writeLog(file="your_api_onError_tryCatch_errors", type="fatal", text="#exception.message# - #exception.detail# : #getErrorTracks(exception.tagContext)#");
+			// Send it
+			mail subject="#this.appName# (#getEnvironment()#) onError try/catch error" from="support@yourcompany.com" to="errors@yourcompany.com" type="html" {
+				writeoutput("<h4>Error occurred inside onError() handler!!</h4>");
+				writedump(e);
+				writeoutput("<h4>Original root error:</h4>");
+				writedump(exception);
+			};
+			// Dump it
+			/* content reset="true" type="text/html; charset=utf-8";
 			header statuscode="500" statustext="Internal Server Error";
 			var linebreak = "#chr(13)##chr(10)#<br>#chr(13)##chr(10)#";
 			writeoutput("Error 500 - Internal Server Error #linebreak#");
 			writeoutput("Error Message: #e.message# - #e.detail# #linebreak#");
-			if ( getEnvironment() eq "dev" ) {
+			if ( getEnvironment() eq "development" ) {
 				writedump(e);
 			}
+			abort; */
+		}
+
+		if ( 
+			( structKeyExists(request, 'unhandled') AND request.unhandled eq true ) 
+			OR 
+			( isDefined("request._taffyRequest.requestArguments.debugRequest") AND request._taffyRequest.requestArguments.debugRequest )
+			OR 
+			( isDefined("request._taffyRequest.requestArguments.debugResponse") AND request._taffyRequest.requestArguments.debugResponse )
+		) {
+			// This is a request to an unhandled path/page or we are going to do some debugging, we can just dump out error message onto screen
+			content reset="true" type="text/html; charset=utf-8";
+			header statuscode="500" statustext="Internal Server Error";
+			writeoutput("<h1>Error 500 <small>Internal Server Error</small></h1>");
+			writeoutput("<p>Oops! An error has occured.</p>");
+			writeoutput("<p><strong>Error Message:</strong> #exception.message# - #exception.detail#</p>");
+			if ( getEnvironment() eq "dev" ) {
+				writeoutput("<h3>EXCEPTION</h3>");
+				writedump(exception);
+				writeoutput("<h3>REQUEST</h3>");
+				writedump(request);
+				//writeoutput("<h3>HTTP REQUEST DATA</h3>");
+				//writedump(GetHttpRequestData());
+				writeoutput("<h3>DEBUG</h3>");
+				try {
+					writedump(request.debugData);
+				} catch (any e) {
+					writeoutput("<em>DEBUG data (request.debugData) is not available</em>");
+				}
+				writeoutput("<h3>SESSION</h3>");
+				try {
+					writedump(session);
+				} catch (any e) {
+					writeoutput("<em>SESSION is not available</em>");
+				}
+				writeoutput("<h3>FORM</h3>");
+				writedump(form);
+				writeoutput("<h3>URL</h3>");
+				writedump(url);
+				writeoutput("<h3>CGI</h3>");
+				writedump(cgi);
+				writeoutput("<h3>APPLICATION CONFIG</h3>");
+				writedump(application.config);
+			}
+		} else {
+			// This is an API request, so return the error in proper json format
+			// Get skeleton api response result data struct
+			var result = application.utils.udf.api_newResultData( fieldList="status,message,timestamp" );
+			result["error"] = application.utils.udf.api_newErrorData( fieldList="resource,code,detail", includeDebug=(getEnvironment() eq "dev") );
+			// Prepare result
+			var nowUTC = dateConvert("local2Utc", now());
+			result.status = 500;
+			result.message = "Internal Server Error";
+			result.timestamp = dateFormat(nowUTC,"yyyy-mm-dd") & "T" & timeFormat(nowUTC,"HH:mm:ss") & "-00:00";
+			// The API resource endpoint (can be in URL or FORM scope)
+			if ( isDefined("endpoint") ) {
+				result.error.resource = endpoint;
+			}
+			result.error.code = "server_500";
+			result.error.detail = "Internal server error - #exception.message# - #exception.detail#";
+			// Add detailed debug info if in dev
+			if ( getEnvironment() eq "dev" ) {
+				result.error.debug.message = exception.message;
+				result.error.debug.detail = exception.detail;
+				result.error.debug.stacktrace = exception.tagContext;
+			}
+			// Convert result to json string
+			var resultJsonString = serializeJson(result); // May need to switch to use the Taffy json serialiser to make the result consistent.
+			// Log it
+			if ( isDefined("application.utils.logger") ) {
+				application.utils.logger.addLog( "API", "Error processing #result.error.resource#", serializeJson(GetHttpRequestData()), resultJsonString );
+			}
+			// Get the error json out
+			content reset="true" type="application/json; charset=utf-8";
+			header statuscode="500" statustext="Internal Server Error";
+			writeoutput( resultJsonString );
 		}
 	}
 
@@ -445,6 +465,7 @@ component extends="lib.taffy.core.api" output="false" {
 		required string msg,
 		struct headers={}
 	) {
+		writeLog(file="earthquake_api", type="error", text="Application.cfc throwError() : #arguments.statusCode# #arguments.msg#");
 		// Get skeleton api response result data struct
 		var result = application.utils.udf.api_newResultData( fieldList="status,message,timestamp" );
 		result["error"] = application.utils.udf.api_newErrorData( fieldList="resource,code,detail", includeDebug=false );
