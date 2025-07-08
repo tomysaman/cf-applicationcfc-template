@@ -43,7 +43,7 @@ component extends="lib.fw1.one" output="false" {
 		, password: "encrypted:..."
 		, blob: true // default: false
 		, clob: true // default: false
-		, connectionLimit: 10 // default:-1
+		, connectionLimit: 999 // default:-1
 	};
 	this.datasources["my_dsn_staging"] = {
 		class: 'org.gjt.mm.mysql.Driver'
@@ -52,7 +52,7 @@ component extends="lib.fw1.one" output="false" {
 		, password: "encrypted:..."
 		, blob: true // default: false
 		, clob: true // default: false
-		, connectionLimit: 10 // default:-1
+		, connectionLimit: 999 // default:-1
 	};
 	this.datasources["my_dsn_production"] = {
 		class: 'org.gjt.mm.mysql.Driver'
@@ -61,7 +61,7 @@ component extends="lib.fw1.one" output="false" {
 		, password: "encrypted:..."
 		, blob: true // default: false
 		, clob: true // default: false
-		, connectionLimit: 10 // default:-1
+		, connectionLimit: 999 // default:-1
 	};
 	this.datasource = "my_dsn_#getEnvironment()#";
 	this.defaultDatasource = this.datasource;
